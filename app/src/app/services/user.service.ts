@@ -18,7 +18,6 @@ export class UserService {
   position: THREE.Vector3;
   users: any;
   usersPosition: any;
-  newUser: any;
   disconnectingUser: any;
 
   constructor(private wsService: WebsocketService) {
@@ -32,11 +31,6 @@ export class UserService {
     );
     
     this.usersPosition = this.wsService.getPosition().pipe(
-      map((response: any): any => {
-        return response;
-      })
-    );
-    this.newUser = this.wsService.getNewUser().pipe(
       map((response: any): any => {
         return response;
       })
@@ -90,6 +84,10 @@ export class UserService {
 
   getPosition() {
     return this.position;
+  }
+
+  getID() {
+    return this.wsService.getID();
   }
 
 }

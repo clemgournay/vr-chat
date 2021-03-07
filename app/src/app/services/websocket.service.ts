@@ -50,22 +50,6 @@ export class WebsocketService {
     return Subject.create(observer, observable)
   }
 
-  getNewUser() {
-    let observable = new Observable(observer => {
-      this.socket.on('new user', (user: any) => {
-        observer.next(user);
-      });
-    });
-
-    let observer = {
-      next: (data: Object) => {
-        //this.socket.emit('message', JSON.stringify(data));
-      },
-    };
-
-    return Subject.create(observer, observable)
-  }
-
   getDisconectingUser() {
     let observable = new Observable(observer => {
       this.socket.on('user left', (user: any) => {
@@ -85,6 +69,10 @@ export class WebsocketService {
 
   sendPosition(position: THREE.Vector3) {
     this.socket.emit('user position', position);
+  }
+
+  getID() {
+    return this.socket.id;
   }
 
 }

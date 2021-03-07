@@ -44,17 +44,15 @@ export class RoomComponent implements OnInit, AfterViewInit {
       console.log(users);
 
       for(let userID in this.users) {
+        this.userService.addUser(userID);
         this.addCharacter(this.users[userID]);
       }
+      console.log('GET USERS')
     });
     this.userService.usersPosition.subscribe((resp: any) => {
       const pos = resp.position;
       this.characters[resp.ID].position.set(pos.x, pos.y, pos.z);
       this.userService.updateUserPosition(resp.ID, resp.position);
-    });
-    this.userService.newUser.subscribe((user: any) => {
-      this.addCharacter(user);
-      this.userService.addUser(user);
     });
     this.userService.disconnectingUser.subscribe((userID: string) => {
       this.removeCharacter(userID);
@@ -63,15 +61,17 @@ export class RoomComponent implements OnInit, AfterViewInit {
   }
 
   addCharacter(user: any) {
-    const geometry = new THREE.BoxGeometry(20, 20, 20);
-    const material = new THREE.MeshLambertMaterial({color: 'white'});
-    const cube = new THREE.Mesh(geometry, material);
-    cube.name = user.ID;
-    const pos = this.users[user.ID].position;
-    cube.position.set(pos.x, pos.y, pos.z);
-    this.scene.add(cube);
-    this.characters[user.ID] = cube;
-    console.log(this.characters[user.ID]);
+    if (user.ID !== this.userService.getID() &&  !this.characters[user.ID]) {
+      const geometry = new THREE.BoxGeometry(20, 20, 20);
+      const material = new THREE.MeshLambertMaterial({color: 'white'});
+      const cube = new THREE.Mesh(geometry, material);
+      cube.name = user.ID;
+      const pos = this.users[user.ID].position;
+      cube.position.set(pos.x, pos.y, pos.z);
+      this.scene.add(cube);
+      this.characters[user.ID] = cube;
+      console.log(this.characters[user.ID]);
+    }
   }
 
   removeCharacter(userID: string) {
