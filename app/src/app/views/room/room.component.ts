@@ -3,6 +3,7 @@ import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener }
 
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 
 import { UserService } from 'src/app/services/user.service';
 
@@ -71,13 +72,11 @@ export class RoomComponent implements OnInit, AfterViewInit {
       cube.position.set(pos.x, pos.y, pos.z);
       this.scene.add(cube);
       this.characters[user.ID] = cube;
-      console.log(this.characters[user.ID]);
     }
   }
 
   removeCharacter(userID: string) {
     const char = this.scene.getObjectByName(userID);
-    console.log(char, userID);
     char.geometry.dispose();
     char.material.dispose();
     this.scene.remove(char);
@@ -92,6 +91,25 @@ export class RoomComponent implements OnInit, AfterViewInit {
 		const light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
 		light.position.set(0.5, 1, 0.75);
     this.scene.add(light);
+
+    /*const loader = new FBXLoader();
+    loader.load('./assets/models/room.new.fbx', (object) => {
+
+        console.log(object)
+        /*this.mixer = new THREE.AnimationMixer(object);
+
+        this.animations.iddle = this.mixer.clipAction(object.animations[0]);
+        this.animations.walking = this.mixer.clipAction(object.animations[1]);
+        this.animations.iddle.play();*/
+
+        /*object.traverse((child) => {
+            if (child.isMesh) {
+                child.castShadow = true;
+                //child.receiveShadow = true;
+            }
+        });
+        this.scene.add(object);
+    });*/
 
     const vertex = new THREE.Vector3();
 		const color = new THREE.Color();
@@ -217,7 +235,6 @@ export class RoomComponent implements OnInit, AfterViewInit {
       if ( this.userService.isMoving('forward') || this.userService.isMoving('backward') ) this.velocity.z -= this.direction.z * 400.0 * delta;
       if ( this.userService.isMoving('left') || this.userService.isMoving('right') ) this.velocity.x -= this.direction.x * 400.0 * delta;
 
-      console.log(intersections.length)
       if (intersections.length > 0) {
         this.velocity.y = Math.max(0, this.velocity.y);
         this.userService.changeState('jump', true);
@@ -242,7 +259,6 @@ export class RoomComponent implements OnInit, AfterViewInit {
     }
 
     const rotation = this.controls.getObject().rotation;
-    console.log(rotation);
     if (!this.userService.rotation.equals(rotation)) {
       this.userService.updateRotation(rotation);
     }
