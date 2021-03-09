@@ -16,13 +16,16 @@ export class UserService {
   jump: boolean = false;
   moving = {forward: false, backward: false, left: false, right: false};
   position: THREE.Vector3;
+  rotation: THREE.Euler;
   users: any;
   usersPosition: any;
+  usersRotation: any;
   disconnectingUser: any;
 
   constructor(private wsService: WebsocketService) {
 
     this.position = new THREE.Vector3(0, 10, 0);
+    this.rotation = new THREE.Euler(0, 0, 0);
 
     this.users = this.wsService.connect().pipe(
       map((response: any): any => {
@@ -31,6 +34,11 @@ export class UserService {
     );
     
     this.usersPosition = this.wsService.getPosition().pipe(
+      map((response: any): any => {
+        return response;
+      })
+    );
+    this.usersRotation = this.wsService.getRotation().pipe(
       map((response: any): any => {
         return response;
       })
@@ -68,9 +76,20 @@ export class UserService {
     this.wsService.sendPosition(position);
   }
 
+  updateRotation(rotation: THREE.Euler) {
+    this.rotation.copy(rotation);
+    this.wsService.sendRotation(rotation);
+  }
+
   updateUserPosition(userID: string, position: {x: number, y: number, z: number}) {
     if (this.users[userID]) {
       this.users[userID].position = new THREE.Vector3(position.x, position.y, position.z);
+    }
+  }
+
+  updateUserRotation(userID: string, rotation: number) {
+    if (this.users[userID]) {
+      this.users[userID].rotation = rotation;
     }
   }
 
@@ -80,10 +99,6 @@ export class UserService {
 
   removeUser(userID: string) {
     delete this.users[userID];
-  }
-
-  getPosition() {
-    return this.position;
   }
 
   getID() {

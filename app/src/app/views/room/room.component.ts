@@ -42,17 +42,18 @@ export class RoomComponent implements OnInit, AfterViewInit {
     this.userService.users.subscribe((users: any) => {
       this.users = users;
       console.log(users);
-
-      for(let userID in this.users) {
+      for (let userID in this.users) {
         this.userService.addUser(userID);
         this.addCharacter(this.users[userID]);
       }
-      console.log('GET USERS')
     });
     this.userService.usersPosition.subscribe((resp: any) => {
-      const pos = resp.position;
-      this.characters[resp.ID].position.set(pos.x, pos.y, pos.z);
+      this.characters[resp.ID].position.copy(resp.position);
       this.userService.updateUserPosition(resp.ID, resp.position);
+    });
+    this.userService.usersRotation.subscribe((resp: any) => {
+      this.characters[resp.ID].rotation.copy(resp.rotation);
+      this.userService.updateUserRotation(resp.ID, resp.rotation);
     });
     this.userService.disconnectingUser.subscribe((userID: string) => {
       this.removeCharacter(userID);
@@ -84,7 +85,7 @@ export class RoomComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.camera.position.y = 10;
+    this.camera.position.y = this.userService.position.y;
     this.scene.background = new THREE.Color(0xffffff);
 		this.scene.fog = new THREE.Fog(0xffffff, 0, 750);
 
@@ -236,8 +237,14 @@ export class RoomComponent implements OnInit, AfterViewInit {
     } 
     
     const position = this.controls.getObject().position;
-    if (!this.userService.getPosition().equals(position)) {
+    if (!this.userService.position.equals(position)) {
       this.userService.updatePosition(position);
+    }
+
+    const rotation = this.controls.getObject().rotation;
+    console.log(rotation);
+    if (!this.userService.rotation.equals(rotation)) {
+      this.userService.updateRotation(rotation);
     }
 
     this.prevTime = time;

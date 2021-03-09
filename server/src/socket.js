@@ -22,6 +22,11 @@ module.exports = (server) => {
       users[socket.id].position = position;
       socket.broadcast.emit('receive position', {ID: socket.id, position: position});
     });
+
+    socket.on('user rotation', (rotation) => {
+      users[socket.id].rotation = rotation;
+      socket.broadcast.emit('receive rotation', {ID: socket.id, rotation: rotation});
+    });
     
     socket.on('disconnect', () => {
       console.log('user disconnected');
