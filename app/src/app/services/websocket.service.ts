@@ -34,6 +34,22 @@ export class WebsocketService {
     return Subject.create(observer, observable)
   }
 
+  getChatMessages() {
+    let observable = new Observable(observer => {
+      this.socket.on('messages', (users: any) => {
+        observer.next(users);
+      });
+    });
+
+    let observer = {
+      next: (data: Object) => {
+        this.socket.emit('new message', JSON.stringify(data));
+      },
+    };
+
+    return Subject.create(observer, observable)
+  }
+
   getPosition() {
     let observable = new Observable(observer => {
       this.socket.on('receive position', (resp: any) => {

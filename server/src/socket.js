@@ -9,6 +9,7 @@ module.exports = (server) => {
     }
   });
   const users = {};
+  const messages = [];
 
   io.on('connection', (socket) => {
     console.log('a user connected');
@@ -16,6 +17,7 @@ module.exports = (server) => {
     users[socket.id] = {ID: socket.id, position: {x: 0, y: 10, z: 0}};
 
     io.emit('users', users);
+    io.emit('messages', messages);
     socket.broadcast.emit('new user', users[socket.id]);
 
     socket.on('user position', (position) => {
@@ -26,6 +28,11 @@ module.exports = (server) => {
     socket.on('user rotation', (rotation) => {
       users[socket.id].rotation = rotation;
       socket.broadcast.emit('receive rotation', {ID: socket.id, rotation: rotation});
+    });
+
+    socket.on('new message', (message) => {
+      messages.push(message);
+      socket.broadcast.emit('receive message', {ID: socket.id, message: message});
     });
     
     socket.on('disconnect', () => {
