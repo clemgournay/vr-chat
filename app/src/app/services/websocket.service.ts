@@ -36,14 +36,29 @@ export class WebsocketService {
 
   getChatMessages() {
     let observable = new Observable(observer => {
-      this.socket.on('messages', (users: any) => {
-        observer.next(users);
+      this.socket.on('messages', (messages: any) => {
+        observer.next(messages);
       });
     });
 
     let observer = {
       next: (data: Object) => {
-        this.socket.emit('new message', JSON.stringify(data));
+        this.socket.emit('new message', data);
+      },
+    };
+
+    return Subject.create(observer, observable)
+  }
+
+  getNewMessages() {
+    let observable = new Observable(observer => {
+      this.socket.on('receive message', (message: any) => {
+        observer.next(message);
+      });
+    });
+
+    let observer = {
+      next: (data: Object) => {
       },
     };
 

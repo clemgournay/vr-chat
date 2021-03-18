@@ -32,7 +32,7 @@ module.exports = (server) => {
 
     socket.on('new message', (message) => {
       messages.push(message);
-      socket.broadcast.emit('receive message', {ID: socket.id, message: message});
+      socket.broadcast.emit('receive message', {ID: socket.id, text: message});
     });
     
     socket.on('disconnect', () => {

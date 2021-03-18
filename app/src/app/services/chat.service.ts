@@ -11,10 +11,17 @@ import { WebsocketService } from './websocket.service';
 export class ChatService {
 
   messages: any;
+  newMessage: any;
 
   constructor(private wsService: WebsocketService) {
 
     this.messages = this.wsService.getChatMessages().pipe(
+      map((response: any): any => {
+        return response;
+      })
+    );
+
+    this.newMessage = this.wsService.getNewMessages().pipe(
       map((response: any): any => {
         return response;
       })

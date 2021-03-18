@@ -1,4 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
+import { FormsModule } from '@angular/forms';
 import { NgModule } from '@angular/core';
 
 import { ChatService } from 'src/app/services/chat.service';
@@ -11,7 +12,8 @@ import { ChatComponent } from './chat.component';
     ChatComponent
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    FormsModule
   ],
   exports: [
     ChatComponent
@@ -22,4 +24,4 @@ import { ChatComponent } from './chat.component';
   ],
   bootstrap: [ChatComponent]
 })
-export class RoomModule { }
+export class ChatModule { }
