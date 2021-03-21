@@ -14,9 +14,18 @@ module.exports = (server) => {
   io.on('connection', (socket) => {
     console.log('a user connected');
 
-    users[socket.id] = {ID: socket.id, position: {x: 0, y: 10, z: 0}};
-
+    const data = socket.request._query;
     io.emit('users', users);
+
+    users[socket.id] = {
+      ID: socket.id, name: 
+      data.username, 
+      avatarID: data.avatarID, 
+      position: {x: 0, y: 10, z: 0}, 
+      rotationY: 0, 
+      jump: false
+    };
+
     io.emit('messages', messages);
     socket.broadcast.emit('new user', users[socket.id]);
 
@@ -25,9 +34,9 @@ module.exports = (server) => {
       socket.broadcast.emit('receive position', {ID: socket.id, position: position});
     });
 
-    socket.on('user rotation', (rotation) => {
-      users[socket.id].rotation = rotation;
-      socket.broadcast.emit('receive rotation', {ID: socket.id, rotation: rotation});
+    socket.on('user rotation', (rotationY) => {
+      users[socket.id].rotationY = rotationY;
+      socket.broadcast.emit('receive rotation', {ID: socket.id, rotationY: rotationY});
     });
 
     socket.on('new message', (message) => {

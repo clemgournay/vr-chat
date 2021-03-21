@@ -1,11 +1,14 @@
 
 import { Component, OnInit, AfterViewInit, ViewChild, ElementRef, HostListener } from '@angular/core';
+import { Router } from '@angular/router';
 
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader';
 
 import { UserService } from 'src/app/services/user.service';
+
+import { User } from 'src/app/models/user.model';
 
 @Component({
   selector: 'app-room',
@@ -14,13 +17,15 @@ import { UserService } from 'src/app/services/user.service';
 })
 export class RoomComponent implements OnInit, AfterViewInit {
   
-  user: any = {};
-  users: any = {};
+  self: User;
   camera: THREE.PerspectiveCamera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 1, 1000);
+  cameraHeight: number = null;
   scene: THREE.Scene = new THREE.Scene();
   controls = new PointerLockControls(this.camera, document.body);
   renderer: THREE.WebGLRenderer;
   characters: any = {};
+  mixers: any = {};
+  animations: any = {};
 
   showInstructions: boolean = true;
 
@@ -31,51 +36,79 @@ export class RoomComponent implements OnInit, AfterViewInit {
   colliders: Array<THREE.Mesh> = [];
 
   prevTime: number = performance.now();  
+  
 
   @ViewChild('view') view: ElementRef;
 
   constructor(
+    private router: Router,
     private userService: UserService
-  ) {}
+  ) {
+    this.self = this.userService.self;
+    if (!this.self.avatar) this.router.navigateByUrl('/');
+    this.cameraHeight = this.self.avatar.boudingBox.getSize().y - 10;
+  }
 
   ngOnInit() {
-    this.user = this.userService.getProperties();
-    this.userService.users.subscribe((users: any) => {
-      this.users = users;
-      console.log(users);
-      for (let userID in this.users) {
-        this.userService.addUser(userID);
-        this.addCharacter(this.users[userID]);
+    this.userService.others.subscribe((users: any) => {
+      for (let userID in users) {
+        this.userService.addOther(users[userID]);
+        this.addAvatar(users[userID]);
       }
     });
-    this.userService.usersPosition.subscribe((resp: any) => {
+    this.userService.newOther.subscribe((user: any) => {
+      this.userService.addOther(user);
+      this.addAvatar(user);
+    });
+    this.userService.othersPosition.subscribe((resp: any) => {
       this.characters[resp.ID].position.copy(resp.position);
-      this.userService.updateUserPosition(resp.ID, resp.position);
+      this.userService.updateOtherPosition(resp.ID, resp.position);
     });
-    this.userService.usersRotation.subscribe((resp: any) => {
-      this.characters[resp.ID].rotation.copy(resp.rotation);
-      this.userService.updateUserRotation(resp.ID, resp.rotation);
+    this.userService.othersRotation.subscribe((resp: any) => {
+      console.log(resp);
+      this.characters[resp.ID].rotation.y = resp.rotationY;
+      this.userService.updateOtherRotationY(resp.ID, resp.rotationY);
     });
-    this.userService.disconnectingUser.subscribe((userID: string) => {
-      this.removeCharacter(userID);
-      this.userService.removeUser(userID);
+    this.userService.disconnectingOther.subscribe((userID: string) => {
+      this.removeAvatar(userID);
+      this.userService.removeOther(userID);
     });
   }
 
-  addCharacter(user: any) {
+  addAvatar(user: any) {
     if (user.ID !== this.userService.getID() &&  !this.characters[user.ID]) {
-      const geometry = new THREE.BoxGeometry(20, 20, 20);
-      const material = new THREE.MeshLambertMaterial({color: 'white'});
-      const cube = new THREE.Mesh(geometry, material);
-      cube.name = user.ID;
-      const pos = this.users[user.ID].position;
-      cube.position.set(pos.x, pos.y, pos.z);
-      this.scene.add(cube);
-      this.characters[user.ID] = cube;
+
+      console.log('Add user', user.ID);
+
+      const loader = new FBXLoader();
+      loader.load(`./assets/models/avatars/${user.avatarID}.fbx`, (object: any) => {
+          console.log(object);
+
+          this.mixers[user.ID] = new THREE.AnimationMixer(object);
+          if (object.animations[0]) {
+            this.animations[user.ID] = {};
+            this.animations[user.ID].iddle = this.mixers[user.ID].clipAction(object.animations[0]);
+            this.animations[user.ID].iddle.play();
+          }
+
+          object.traverse((child: any) => {
+              if (child.isMesh) {
+                child.castShadow = true;
+                child.receiveShadow = true;
+              }
+          });
+
+          const pos = this.userService.others[user.ID].position;
+          object.position.set(pos.x, pos.y, pos.z);
+          object.name = user.ID;
+          object.rotation.y = Math.PI;
+          this.scene.add(object);
+          this.characters[user.ID] = object;
+      });
     }
   }
 
-  removeCharacter(userID: string) {
+  removeAvatar(userID: string) {
     const char = this.scene.getObjectByName(userID);
     char.geometry.dispose();
     char.material.dispose();
@@ -84,32 +117,13 @@ export class RoomComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.camera.position.y = this.userService.position.y;
+    this.camera.position.y = this.userService.self.position.y + this.cameraHeight;
     this.scene.background = new THREE.Color(0xffffff);
-		this.scene.fog = new THREE.Fog(0xffffff, 0, 750);
+		this.scene.fog = new THREE.Fog(0xffffff, 0, 1000);
 
 		const light = new THREE.HemisphereLight(0xeeeeff, 0x777788, 0.75);
 		light.position.set(0.5, 1, 0.75);
     this.scene.add(light);
-
-    /*const loader = new FBXLoader();
-    loader.load('./assets/models/room.new.fbx', (object) => {
-
-        console.log(object)
-        /*this.mixer = new THREE.AnimationMixer(object);
-
-        this.animations.iddle = this.mixer.clipAction(object.animations[0]);
-        this.animations.walking = this.mixer.clipAction(object.animations[1]);
-        this.animations.iddle.play();*/
-
-        /*object.traverse((child) => {
-            if (child.isMesh) {
-                child.castShadow = true;
-                //child.receiveShadow = true;
-            }
-        });
-        this.scene.add(object);
-    });*/
 
     const vertex = new THREE.Vector3();
 		const color = new THREE.Color();
@@ -118,9 +132,9 @@ export class RoomComponent implements OnInit, AfterViewInit {
 		let position = floorGeometry.attributes.position;
 		for ( let i = 0, l = position.count; i < l; i ++ ) {
       vertex.fromBufferAttribute(position, i);
-      vertex.x += Math.random() * 20 - 10;
+      vertex.x += Math.random() * 200 - 100;
       vertex.y += Math.random() * 2;
-      vertex.z += Math.random() * 20 - 10;
+      vertex.z += Math.random() * 200 - 100;
 			position.setXYZ(i, vertex.x, vertex.y, vertex.z);
 		}
     
@@ -128,7 +142,7 @@ export class RoomComponent implements OnInit, AfterViewInit {
 		position = floorGeometry.attributes.position;
 		const colorsFloor = [];
 		for ( let i = 0, l = position.count; i < l; i ++ ) {
-      color.setHSL( Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75 );
+      color.setHSL(Math.random() * 0.3 + 0.5, 0.75, Math.random() * 0.25 + 0.75);
 			colorsFloor.push( color.r, color.g, color.b );
     }
 
@@ -216,6 +230,10 @@ export class RoomComponent implements OnInit, AfterViewInit {
   update() {
     const time = performance.now();
 
+    for(let ID in this.mixers) {
+      this.mixers[ID].update();
+    }
+
 		if (this.controls.isLocked) {
 
 			this.raycaster.ray.origin.copy(this.controls.getObject().position);
@@ -226,14 +244,15 @@ export class RoomComponent implements OnInit, AfterViewInit {
 			this.velocity.x -= this.velocity.x * 10.0 * delta;
 			this.velocity.z -= this.velocity.z * 10.0 * delta;
 
-		  this.velocity.y -= 9.8 * this.user.mass * delta;
+      const mass = 100;
+		  this.velocity.y -= 9.8 * mass * delta;
 
 			this.direction.z = Number(this.userService.isMoving('forward')) - Number(this.userService.isMoving('backward'));
 			this.direction.x = Number(this.userService.isMoving('right')) - Number(this.userService.isMoving('left'));
 			this.direction.normalize(); // this ensures consistent movements in all directions
 
-      if ( this.userService.isMoving('forward') || this.userService.isMoving('backward') ) this.velocity.z -= this.direction.z * 400.0 * delta;
-      if ( this.userService.isMoving('left') || this.userService.isMoving('right') ) this.velocity.x -= this.direction.x * 400.0 * delta;
+      if ( this.userService.isMoving('forward') || this.userService.isMoving('backward') ) this.velocity.z -= this.direction.z * 2000.0 * delta;
+      if ( this.userService.isMoving('left') || this.userService.isMoving('right') ) this.velocity.x -= this.direction.x * 2000.0 * delta;
 
       if (intersections.length > 0) {
         this.velocity.y = Math.max(0, this.velocity.y);
@@ -245,22 +264,24 @@ export class RoomComponent implements OnInit, AfterViewInit {
 
 			this.controls.getObject().position.y += (this.velocity.y * delta); // new behavior
 
-      if (this.controls.getObject().position.y < 10) {
+      if (this.controls.getObject().position.y < this.cameraHeight) {
         this.velocity.y = 0;
-        this.controls.getObject().position.y = 10;
+        this.controls.getObject().position.y = this.cameraHeight;
         this.userService.changeState('jump', true);
       }
 
     } 
     
-    const position = this.controls.getObject().position;
-    if (!this.userService.position.equals(position)) {
+    const position = new THREE.Vector3();
+    position.copy(this.controls.getObject().position);
+    position.y = position.y - this.cameraHeight;
+    if (!this.self.position.equals(position)) {
       this.userService.updatePosition(position);
     }
 
-    const rotation = this.controls.getObject().rotation;
-    if (!this.userService.rotation.equals(rotation)) {
-      this.userService.updateRotation(rotation);
+    const rotationY = this.controls.getObject().rotation.y;
+    if (this.self.rotation.y !== rotationY) {
+      this.userService.updateRotationY(rotationY);
     }
 
     this.prevTime = time;

@@ -16,11 +16,12 @@ export class WebsocketService {
     
   }
 
-  connect() {
-    this.socket = io(environment.apiURL);
+  connect(query: any, callback?: any) {
+    this.socket = io(environment.apiURL, {query: query});
 
     let observable = new Observable(observer => {
       this.socket.on('users', (users: any) => {
+        callback(this.socket.id);
         observer.next(users);
       });
     });
@@ -32,6 +33,21 @@ export class WebsocketService {
     };
 
     return Subject.create(observer, observable)
+  }
+
+  getNewUser() {
+    let observable = new Observable(observer => {
+      this.socket.on('new user', (user: any) => {
+        observer.next(user);
+      });
+    });
+
+    let observer = {
+      next: (data: Object) => {
+      },
+    };
+
+    return Subject.create(observer, observable);
   }
 
   getChatMessages() {
@@ -81,7 +97,7 @@ export class WebsocketService {
     return Subject.create(observer, observable)
   }
 
-  getRotation() {
+  getRotationY() {
     let observable = new Observable(observer => {
       this.socket.on('receive rotation', (resp: any) => {
         observer.next(resp);

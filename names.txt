@@ -1,0 +1,3 @@
+avatar place
+avatar world
+open chat

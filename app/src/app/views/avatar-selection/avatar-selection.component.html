@@ -1,0 +1,14 @@
+<canvas #view></canvas>
+<div class="ui">
+  <div class="char-info">
+    <h2>{{current.name}}</h2>
+    <div class="name">
+      <input type="text" class="username" [(ngModel)]="username" maxlength="50" placeholder="Your name">
+    </div>
+  </div>
+  <div class="controls">
+    <button type="button" (click)="changeAvatar(-1)">Prev</button>
+    <button type="button" (click)="enterRoom()">Enter the room</button>
+    <button type="button" (click)="changeAvatar(1)">Next</button>
+  </div>
+</div>
