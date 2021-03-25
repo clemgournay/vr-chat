@@ -1,5 +1,5 @@
 
-import { Component, OnInit, ViewChild, ViewChildren, ElementRef, QueryList } from '@angular/core';
+import { Component, OnInit, ViewChild, ChangeDetectorRef, ViewChildren, ElementRef, QueryList, AfterViewChecked } from '@angular/core';
 
 import { ChatService } from 'src/app/services/chat.service';
 
@@ -8,7 +8,7 @@ import { ChatService } from 'src/app/services/chat.service';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.scss']
 })
-export class ChatComponent implements OnInit {
+export class ChatComponent implements OnInit, AfterViewChecked {
 
   messages: Array<any> = [];
   message: any = {ID: '', text: ''};
@@ -18,6 +18,7 @@ export class ChatComponent implements OnInit {
   @ViewChildren('message') messagesList: QueryList<ElementRef>;
 
   constructor(
+    private cdRef: ChangeDetectorRef,
     private chatService: ChatService
   ) {}
 
@@ -35,6 +36,18 @@ export class ChatComponent implements OnInit {
       this.scrollBottom();
     });
   }
+ 
+  ngAfterViewChecked() {
+    let bottom = 10;
+    for (let i = this.messages.length - 1; i >= 0; i--) {
+      const el = this.messagesList.toArray()[i];
+      if (el) {
+        this.messages[i].bottom = bottom;
+        bottom += el.nativeElement.offsetHeight + 10;
+      }
+    }
+    this.cdRef.detectChanges();
+  }
 
   onKeydown(e: KeyboardEvent) {
     if (e.shiftKey && e.code === 'Enter') {
@@ -42,7 +55,7 @@ export class ChatComponent implements OnInit {
     } else if (e.code === 'Enter') {
       e.preventDefault();
       this.messages.push(JSON.parse(JSON.stringify(this.message)));
-      this.chatService.messages.next(this.message);
+      this.chatService.messages.next(this.message.text);
       this.message.text = '';
       this.scrollBottom();
     }
@@ -54,16 +67,8 @@ export class ChatComponent implements OnInit {
     });
   }
 
-  getBottom(i: number) {
-    //const el = document.getElementById(`chat-${i}`);
-
-    const el = this.messagesList[i];
-    console.log(el);
-    if (el) {
-      console.log(el.offsetHeight)
-      this.bottom += el.offsetHeight + 10;
-    }
-    return this.bottom;
+  showMessages() {
+    console.log(this.messagesList.toArray()[0]);
   }
 
 }
