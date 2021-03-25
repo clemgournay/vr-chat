@@ -1,5 +1,5 @@
 
-import { Component, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, ViewChild, ViewChildren, ElementRef, QueryList } from '@angular/core';
 
 import { ChatService } from 'src/app/services/chat.service';
 
@@ -12,8 +12,10 @@ export class ChatComponent implements OnInit {
 
   messages: Array<any> = [];
   message: any = {ID: '', text: ''};
+  bottom: number = 0;
 
   @ViewChild('messagesRef') messagesRef: ElementRef;
+  @ViewChildren('message') messagesList: QueryList<ElementRef>;
 
   constructor(
     private chatService: ChatService
@@ -50,6 +52,18 @@ export class ChatComponent implements OnInit {
     setTimeout(() => {
       this.messagesRef.nativeElement.scrollTop = this.messagesRef.nativeElement.scrollHeight;
     });
+  }
+
+  getBottom(i: number) {
+    //const el = document.getElementById(`chat-${i}`);
+
+    const el = this.messagesList[i];
+    console.log(el);
+    if (el) {
+      console.log(el.offsetHeight)
+      this.bottom += el.offsetHeight + 10;
+    }
+    return this.bottom;
   }
 
 }

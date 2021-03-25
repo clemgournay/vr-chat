@@ -1,6 +1,6 @@
 <div class="chatbox">
   <div class="messages" #messagesRef>
-    <div class="message" *ngFor="let message of messages; let i = index;" [style.opacity]="(5 - ((messages.length - 1) - i)) / 5">{{message.text}}</div>
+    <div class="message" *ngFor="let message of messages; let i = index" [id]="'chat-' + i" [style.bottom]="getBottom(i)" [style.opacity]="(5 - ((messages.length - 1) - i)) / 5" #message>{{message.text}}</div>
   </div>
   <textarea [(ngModel)]="message.text" (keydown)="onKeydown($event)"></textarea>
 </div>
